@@ -1,4 +1,6 @@
-# MeleeMedia Tool
+# MeleeMedia Tool 
+
+[Download Latest](https://github.com/Ploaj/MeleeMedia/releases) [![Build status](https://ci.appveyor.com/api/projects/status/6tr5rq9adkkj7dv9?svg=true)](https://ci.appveyor.com/project/Ploaj/meleemedia)
 
 MeleeMedia is a command line tool that can convert to and from .mth, .hps, and .thp found in Super Smash Bros Melee.
 
