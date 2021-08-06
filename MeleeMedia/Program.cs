@@ -16,7 +16,7 @@ namespace MeleeMedia
                 var outf = args[1];
 
                 string loopPoint = "00:00:00";
-                for (int i = 0; i > args.Length - 1; i++)
+                for (int i = 0; i < args.Length - 1; i++)
                 {
                     if (args[i] == "-loop")
                         loopPoint = args[i + 1];
