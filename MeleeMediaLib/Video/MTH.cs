@@ -101,7 +101,9 @@ namespace MeleeMedia.Video
 
                 w.Write(BitConverter.GetBytes(0x40).Reverse().ToArray()); // video off
                 w.Write(0); // audio off (unused)
-                w.Write(BitConverter.GetBytes(Frames.Count > 0 ? Frames[0].Data.Length + 4 : 0).Reverse().ToArray()); // video start size
+                var first_frame_size = Frames.Count > 0 ? Frames[0].Data.Length + 4 : 0;
+                first_frame_size += 0x20 - (first_frame_size % 0x20);
+                w.Write(BitConverter.GetBytes(first_frame_size).Reverse().ToArray()); // video start size
                 w.Write(0); // audio start size (unused)
 
                 // other channels (unused)
@@ -115,12 +117,17 @@ namespace MeleeMedia.Video
                 {
                     var nextVideoSize = 0;
                     if (f + 1 < FrameCount)
-                        nextVideoSize = Frames[f + 1].Data.Length;
+                    {
+                        nextVideoSize = Frames[f + 1].Data.Length + 4;
+                        nextVideoSize += 0x20 - (nextVideoSize % 0x20);
+                    }
 
-                    w.Write(BitConverter.GetBytes(nextVideoSize + 4).Reverse().ToArray());
+                    w.Write(BitConverter.GetBytes(nextVideoSize).Reverse().ToArray());
                     w.Write(Frames[f].Data);
+                    var padding = 0x20 - ((Frames[f].Data.Length + 4) % 0x20);
+                    w.Write(new byte[padding]);
 
-                    max = Math.Max(max, Frames[f].Data.Length);
+                    max = Math.Max(max, Frames[f].Data.Length + 4 + padding);
                 }
 
                 w.BaseStream.Position = 0x0C;

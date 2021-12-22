@@ -4,7 +4,7 @@ using System;
 using System.Drawing;
 using System.IO;
 
-namespace MeleeMedia
+namespace MeleeMediaCLI
 {
     class Program
     {
@@ -14,6 +14,10 @@ namespace MeleeMedia
             {
                 var inf = args[0];
                 var outf = args[1];
+
+                int frameWidth = 448;
+                int frameHeight = 336;
+                int frameRate = 30;
 
                 string loopPoint = "00:00:00";
                 for (int i = 0; i > args.Length - 1; i++)
@@ -46,8 +50,7 @@ namespace MeleeMedia
                     case ".aiff":
                     case ".wma":
                     case ".m4a":
-                        var dsp = new DSP();
-                        dsp.FromFile(inf);
+                        var dsp = new DSP(inf);
                         dsp.SetLoopFromTimeSpan(ts);
 
                         switch (oext)
@@ -71,7 +74,7 @@ namespace MeleeMedia
                         break;
                     case ".mp4":
                         if (oext == ".mth")
-                            VideoConverter.MP4toMTH(inf).Save(outf);
+                            VideoConverter.MP4toMTH(inf, frameWidth, frameHeight, frameRate).Save(outf);
                         else
                             Console.WriteLine($"Unsupported export format " + oext);
                         break;

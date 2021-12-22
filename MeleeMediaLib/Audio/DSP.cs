@@ -1,15 +1,10 @@
-﻿using CSCore;
-using CSCore.Codecs.MP3;
-using MeleeMedia.IO;
+﻿using MeleeMedia.IO;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using VGAudio.Codecs.GcAdpcm;
 
 namespace MeleeMedia.Audio
 {
-
     public class DSPChannel
     {
         public short LoopFlag { get; set; }
@@ -36,6 +31,12 @@ namespace MeleeMedia.Audio
 
     public class DSP
     {
+
+        // TODO: *.mp3*.aiff*.wma*.m4a
+        public static string SupportedImportFilter { get; } = "Supported (*.dsp*.wav*.hps)|*.dsp;*.wav;*.hps;";
+
+        public static string SupportedExportFilter { get; } = "Supported Types(*.wav*.dsp*.hps)|*.wav;*.dsp;*.hps";
+
         public int Frequency { get; set; }
 
         public string LoopPoint
@@ -95,6 +96,24 @@ namespace MeleeMedia.Audio
         /// <summary>
         /// 
         /// </summary>
+
+        public DSP()
+        {
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="filePath"></param>
+        public DSP(string filePath)
+        {
+            FromFile(filePath);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="filePath"></param>
         public void FromFile(string filePath)
         {
@@ -117,18 +136,6 @@ namespace MeleeMedia.Audio
                     break;
                 case "dsp":
                     FromDSP(data);
-                    break;
-                case "mp3":
-                    FromMP3(data);
-                    break;
-                case "aiff":
-                    FromAIFF(data);
-                    break;
-                case "wma":
-                    FromWMA(data);
-                    break;
-                case "m4a":
-                    FromM4A(data);
                     break;
                 case "hps":
                     FromHPS(data);
@@ -288,7 +295,7 @@ namespace MeleeMedia.Audio
 
         #region WAVE
 
-        private void FromWAVE(byte[] wavFile)
+        public void FromWAVE(byte[] wavFile)
         {
             if (wavFile.Length < 0x2C)
                 throw new NotSupportedException("File is not a valid WAVE file");
@@ -314,6 +321,8 @@ namespace MeleeMedia.Audio
                 if (bpp != 16)
                     throw new NotSupportedException("Only 16 bit WAVE formats accepted");
 
+                while (r.ReadByte() == 0) ;
+                r.BaseStream.Seek(-1, SeekOrigin.Current);
 
                 while (new string(r.ReadChars(4)) != "data")
                 {
@@ -347,7 +356,7 @@ namespace MeleeMedia.Audio
 
                     c.Data = GcAdpcmEncoder.Encode(ss, c.COEF);
 
-                    c.NibbleCount = c.Data.Length * 2;
+                    c.NibbleCount = (c.Data.Length - 1) * 2;
 
                     c.InitialPredictorScale = c.Data[0];
 
@@ -421,52 +430,10 @@ namespace MeleeMedia.Audio
 
         #endregion
 
-        #region Extra Formats
-
-        private void FromMP3(byte[] data)
+        public override string ToString()
         {
-            using (MemoryStream s = new MemoryStream(data))
-            using (IWaveSource soundSource = new DmoMp3Decoder(s))
-            using (MemoryStream w = new MemoryStream())
-            {
-                soundSource.WriteToWaveStream(w);
-                FromWAVE(w.ToArray());
-            }
+            var loop = LoopPoint == "00:00:00" ? "" : " : " + LoopPoint;
+            return $"{ChannelType} : {Frequency}Hz : {Length}{loop}";
         }
-
-        private void FromM4A(byte[] data)
-        {
-            using (MemoryStream s = new MemoryStream(data))
-            using (IWaveSource soundSource = new CSCore.Codecs.DDP.DDPDecoder(s))
-            using (MemoryStream w = new MemoryStream())
-            {
-                soundSource.WriteToWaveStream(w);
-                FromWAVE(w.ToArray());
-            }
-        }
-
-        private void FromWMA(byte[] data)
-        {
-            using (MemoryStream s = new MemoryStream(data))
-            using (IWaveSource soundSource = new CSCore.Codecs.WMA.WmaDecoder(s))
-            using (MemoryStream w = new MemoryStream())
-            {
-                soundSource.WriteToWaveStream(w);
-                FromWAVE(w.ToArray());
-            }
-        }
-
-        private void FromAIFF(byte[] data)
-        {
-            using (MemoryStream s = new MemoryStream(data))
-            using (IWaveSource soundSource = new CSCore.Codecs.AIFF.AiffReader(s))
-            using (MemoryStream w = new MemoryStream())
-            {
-                soundSource.WriteToWaveStream(w);
-                FromWAVE(w.ToArray());
-            }
-        }
-
-        #endregion
     }
 }

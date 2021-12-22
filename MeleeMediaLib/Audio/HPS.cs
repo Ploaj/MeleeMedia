@@ -194,17 +194,18 @@ namespace MeleeMedia.Audio
                         if (i + unpaddedChunk > dsp.Channels[0].Data.Length)
                             unpaddedChunk = dsp.Channels[0].Data.Length - i;
                         Array.Copy(c.Data, i, chunk, 0, unpaddedChunk);
-                        var dec = VGAudio.Codecs.GcAdpcm.GcAdpcmDecoder.Decode(chunk, c.COEF);
+                        var dec = GcAdpcmDecoder.Decode(chunk, c.COEF);
                         history[j] = (ushort)dec[dec.Length - 2] | ((ushort)dec[dec.Length - 1] << 16);
                         w.Write(chunk);
                     }
+
+                    Console.WriteLine(chunkSize.ToString("X"));
 
                     i += chunkSize;
                 }
 
                 w.BaseStream.Position = nextPosition;
                 w.Write(loopPosition);
-
             }
         }
     }

@@ -28,7 +28,7 @@ namespace MeleeMedia.Video
         /// 
         /// </summary>
         /// <returns></returns>
-        public static MTH MP4toMTH(string filePath)
+        public static MTH MP4toMTH(string filePath, int frameWidth, int frameHeight, int frameRate)
         {
             MTH mth = null;
 
@@ -38,15 +38,41 @@ namespace MeleeMedia.Video
                 reader.Open(filePath);
 
                 // create new mth container
-                mth = new MTH(reader.Width, reader.Height, reader.FrameRate);
+                mth = new MTH(frameWidth, frameHeight, frameRate);
+
+                // calculate frame rate
+                var rate = reader.FrameRate / (float)frameRate;
 
                 // copy frames
-                for (int i = 0; i < reader.FrameCount; i++)
+                float curr_frame = 0;
+                
+                while (curr_frame + rate < reader.FrameCount)
+                {
+                    var dis = (int)((curr_frame + rate) - curr_frame) - 1;
+                    curr_frame += rate;
+
+                    // System.Console.WriteLine(curr_frame  + " " + reader.FrameCount + " " + dis);
+
+                    for (int j = 0; j < dis; j++) 
+                        reader.ReadVideoFrame();
+
                     using (Bitmap frame = reader.ReadVideoFrame())
-                        mth.AddFrame(frame);
+                    using (var resize = ResizeBitmap(frame, frameWidth, frameHeight))
+                    {
+                        mth.AddFrame(resize);
+                    }
+                }
             }
 
             return mth;
+        }
+
+        private static Bitmap ResizeBitmap(Bitmap bmp, int width, int height)
+        {
+            Bitmap result = new Bitmap(width, height);
+            using (Graphics g = Graphics.FromImage(result))
+                g.DrawImage(bmp, 0, 0, width, height);
+            return result;
         }
     }
 }
