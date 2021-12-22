@@ -45,7 +45,7 @@ namespace MeleeMedia.Audio
                     channel.Gain = r.ReadInt16();
                     channel.InitialPredictorScale = r.ReadInt16();
                     channel.InitialSampleHistory1 = r.ReadInt16();
-                    channel.InitialSampleHistory1 = r.ReadInt16();
+                    channel.InitialSampleHistory2 = r.ReadInt16();
 
                     channel.NibbleCount = EA - CA;
                     channel.LoopStart = SA - CA;
