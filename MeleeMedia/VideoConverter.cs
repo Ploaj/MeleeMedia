@@ -28,7 +28,7 @@ namespace MeleeMedia.Video
         /// 
         /// </summary>
         /// <returns></returns>
-        public static MTH MP4toMTH(string filePath, int frameWidth, int frameHeight, int frameRate)
+        public static MTH MP4toMTH(string filePath, int frameWidth, int frameHeight, int frameRate, long compression)
         {
             MTH mth = null;
 
@@ -55,7 +55,7 @@ namespace MeleeMedia.Video
                     using (Bitmap frame = reader.ReadVideoFrame())
                     using (var resize = ResizeBitmap(frame, frameWidth, frameHeight))
                     {
-                        mth.AddFrame(resize);
+                        mth.AddFrame(resize, compression);
                     }
 
                     //for (int j = 0; j < dis; j++)

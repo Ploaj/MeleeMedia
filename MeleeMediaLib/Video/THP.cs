@@ -53,7 +53,7 @@ namespace MeleeMedia.Video
         /// </summary>
         /// <param name="bmp"></param>
         /// <returns></returns>
-        public static THP FromBitmap(Bitmap bmp)
+        public static THP FromBitmap(Bitmap bmp, long compression)
         {
             using (MemoryStream stream = new MemoryStream())
             {
@@ -61,7 +61,7 @@ namespace MeleeMedia.Video
                 Encoder myEncoder = Encoder.Quality;
                 EncoderParameters myEncoderParameters = new EncoderParameters(1);
 
-                EncoderParameter myEncoderParameter = new EncoderParameter(myEncoder, 25L);
+                EncoderParameter myEncoderParameter = new EncoderParameter(myEncoder, compression);
                 myEncoderParameters.Param[0] = myEncoderParameter;
 
                 bmp.Save(stream, jpgEncoder, myEncoderParameters);

@@ -18,12 +18,20 @@ namespace MeleeMediaCLI
                 int frameWidth = 448;
                 int frameHeight = 336;
                 int frameRate = 30;
+                long video_compression = 25L;
+                long image_compression = 99L;
 
                 string loopPoint = "00:00:00";
                 for (int i = 0; i < args.Length - 1; i++)
                 {
                     if (args[i] == "-loop")
                         loopPoint = args[i + 1];
+
+                    if (args[i] == "-comp")
+                    {
+                        long.TryParse(args[i + 1], out video_compression);
+                        long.TryParse(args[i + 1], out image_compression);
+                    }
                 }
 
                 if (!File.Exists(inf))
@@ -74,7 +82,7 @@ namespace MeleeMediaCLI
                         break;
                     case ".mp4":
                         if (oext == ".mth")
-                            VideoConverter.MP4toMTH(inf, frameWidth, frameHeight, frameRate).Save(outf);
+                            VideoConverter.MP4toMTH(inf, frameWidth, frameHeight, frameRate, video_compression).Save(outf);
                         else
                             Console.WriteLine($"Unsupported export format " + oext);
                         break;
@@ -95,7 +103,7 @@ namespace MeleeMediaCLI
                     case ".jpg":
                         if (oext == ".thp")
                             using (var bmp = new Bitmap(inf))
-                                THP.FromBitmap(bmp).Save(outf);
+                                THP.FromBitmap(bmp, image_compression).Save(outf);
                         else
                             Console.WriteLine($"Unsupported export format " + oext);
                         break;
@@ -125,6 +133,7 @@ namespace MeleeMediaCLI
             Console.WriteLine("\tAudio Input - dsp, wav, hps, mp3, aiff, wma, m4a");
             Console.WriteLine("\tAudio Output - dsp, wav, hps");
             Console.WriteLine("\tSpecify Loop -loop [d.]hh:mm:ss[.fffffff]");
+            Console.WriteLine("\tSpecify Compression (default 25) -comp 50");
 
         }
     }

@@ -152,9 +152,9 @@ namespace MeleeMedia.Video
         /// 
         /// </summary>
         /// <param name="bmp"></param>
-        public void AddFrame(Bitmap bmp)
+        public void AddFrame(Bitmap bmp, long compression)
         {
-            Frames.Add(THP.FromBitmap(bmp));
+            Frames.Add(THP.FromBitmap(bmp, compression));
         }
 
         /// <summary>
