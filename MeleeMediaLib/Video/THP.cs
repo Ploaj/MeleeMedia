@@ -61,11 +61,11 @@ namespace MeleeMedia.Video
                 Encoder myEncoder = Encoder.Quality;
                 EncoderParameters myEncoderParameters = new EncoderParameters(1);
 
-                EncoderParameter myEncoderParameter = new EncoderParameter(myEncoder, 0L);
+                EncoderParameter myEncoderParameter = new EncoderParameter(myEncoder, 25L);
                 myEncoderParameters.Param[0] = myEncoderParameter;
 
-                //bmp.Save(stream, jpgEncoder, myEncoderParameters);
-                bmp.Save(stream, ImageFormat.Jpeg);
+                bmp.Save(stream, jpgEncoder, myEncoderParameters);
+                //bmp.Save(stream, ImageFormat.Jpeg);
 
                 return FromJPEG(stream.ToArray());
             }

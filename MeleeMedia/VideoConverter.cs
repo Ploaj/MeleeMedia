@@ -45,22 +45,21 @@ namespace MeleeMedia.Video
 
                 // copy frames
                 float curr_frame = 0;
-                
-                while (curr_frame + rate < reader.FrameCount)
+                while (curr_frame < reader.FrameCount)
                 {
                     var dis = (int)((curr_frame + rate) - curr_frame) - 1;
-                    curr_frame += rate;
+                    curr_frame += 1;
 
                     // System.Console.WriteLine(curr_frame  + " " + reader.FrameCount + " " + dis);
-
-                    for (int j = 0; j < dis; j++) 
-                        reader.ReadVideoFrame();
 
                     using (Bitmap frame = reader.ReadVideoFrame())
                     using (var resize = ResizeBitmap(frame, frameWidth, frameHeight))
                     {
                         mth.AddFrame(resize);
                     }
+
+                    //for (int j = 0; j < dis; j++)
+                    //    reader.ReadVideoFrame();
                 }
             }
 
