@@ -27,8 +27,8 @@ deploy:
     branch: master
 
 after_build:
-  - 7z a "MeleeMedia.zip" "%APPVEYOR_BUILD_FOLDER%\MeleeMedia\bin\Release\MeleeMedia.exe"
-  - 7z a "MeleeMedia.zip" "%APPVEYOR_BUILD_FOLDER%\MeleeMedia\bin\Release\MeleeMedia.exe.config"
+  - 7z a "MeleeMedia.zip" "%APPVEYOR_BUILD_FOLDER%\MeleeMedia\bin\Release\MeleeMediaCLI.exe"
+  - 7z a "MeleeMedia.zip" "%APPVEYOR_BUILD_FOLDER%\MeleeMedia\bin\Release\MeleeMediaCLI.exe.config"
   - 7z a "MeleeMedia.zip" "%APPVEYOR_BUILD_FOLDER%\MeleeMedia\bin\Release\lib"
   - 7z d "MeleeMedia.zip" "lib\*.xml"
   - appveyor PushArtifact "MeleeMedia.zip"
