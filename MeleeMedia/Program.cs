@@ -51,6 +51,24 @@ namespace MeleeMediaCLI
 
                 switch (iext)
                 {
+                    case ".brstm":
+                        {
+                            var dsp = new DSP();
+                            dsp.FromBRSTM(inf);
+
+                            switch (oext)
+                            {
+                                case ".wav":
+                                case ".dsp":
+                                case ".hps":
+                                    dsp.ExportFormat(outf);
+                                    break;
+                                default:
+                                    Console.WriteLine($"Unsupported export format " + oext);
+                                    return;
+                            }
+                        }
+                        break;
                     case ".dsp":
                     case ".wav":
                     case ".hps":
@@ -58,19 +76,21 @@ namespace MeleeMediaCLI
                     case ".aiff":
                     case ".wma":
                     case ".m4a":
-                        var dsp = new DSP(inf);
-                        dsp.SetLoopFromTimeSpan(ts);
-
-                        switch (oext)
                         {
-                            case ".wav":
-                            case ".dsp":
-                            case ".hps":
-                                dsp.ExportFormat(outf);
-                                break;
-                            default:
-                                Console.WriteLine($"Unsupported export format " + oext);
-                                return;
+                            var dsp = new DSP(inf);
+                            dsp.SetLoopFromTimeSpan(ts);
+
+                            switch (oext)
+                            {
+                                case ".wav":
+                                case ".dsp":
+                                case ".hps":
+                                    dsp.ExportFormat(outf);
+                                    break;
+                                default:
+                                    Console.WriteLine($"Unsupported export format " + oext);
+                                    return;
+                            }
                         }
                         break;
 

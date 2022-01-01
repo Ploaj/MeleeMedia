@@ -199,8 +199,6 @@ namespace MeleeMedia.Audio
                         w.Write(chunk);
                     }
 
-                    Console.WriteLine(chunkSize.ToString("X"));
-
                     i += chunkSize;
                 }
 
@@ -208,5 +206,6 @@ namespace MeleeMedia.Audio
                 w.Write(loopPosition);
             }
         }
+
     }
 }
