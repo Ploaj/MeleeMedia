@@ -121,6 +121,11 @@ namespace MeleeMedia.Video
                         nextVideoSize = Frames[f + 1].Data.Length + 4;
                         nextVideoSize += 0x20 - (nextVideoSize % 0x20);
                     }
+                    else
+                    {
+                        nextVideoSize = Frames[0].Data.Length + 4;
+                        nextVideoSize += 0x20 - (nextVideoSize % 0x20);
+                    }
 
                     w.Write(BitConverter.GetBytes(nextVideoSize).Reverse().ToArray());
                     w.Write(Frames[f].Data);
