@@ -356,7 +356,7 @@ namespace MeleeMedia.Audio
 
                     c.Data = GcAdpcmEncoder.Encode(ss, c.COEF);
 
-                    c.NibbleCount = (c.Data.Length - 1) * 2;
+                    c.NibbleCount = GcAdpcmMath.SampleCountToNibbleCount(ss.Length);
 
                     c.InitialPredictorScale = c.Data[0];
 
