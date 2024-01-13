@@ -101,6 +101,7 @@ namespace MeleeMedia.Audio
                 dsp.Channels[0].Data = channelData1.ToArray();
                 dsp.Channels[1].Data = channelData2.ToArray();
             }
+
             return dsp;
         }
 
@@ -140,32 +141,84 @@ namespace MeleeMedia.Audio
                 // now divide into chunks taking into account loop point
 
                 var loopStart = dsp.Channels[0].LoopStart / 2;
-                if (loopStart == 0)
-                    loopStart = int.MaxValue;
-                if (loopStart % 56 == 0)
+                if (loopStart != 0 && loopStart % 56 == 0)
                     loopStart += 56 - (loopStart % 56);
                 var loopPosition = -1;
                 var nextPosition = 0;
 
                 int[] history = new int[dsp.Channels.Count];
 
+                // preprocess - determine loop chunk size
+                
+                // calculate general chunk size
+                var baseChunkSize = 0x10000 / dsp.Channels.Count;
+
+                // calculate size of loop chunk
+                var loopChunk = loopStart % baseChunkSize;
+                var loopIndex = loopStart / baseChunkSize;
+
+                // check if loop buffer too small
+                // if it is then just take data from the chunk before it
+                bool loopSplit = false;
+                if (loopIndex != 0 && loopChunk * 2 < 0x10000 / 2)
+                    loopSplit = true;
+
+                var dataLength = dsp.Channels[0].Data.Length;
+
                 int i;
-                for (i = 0; i < dsp.Channels[0].Data.Length;)
-                {
-                    var chunkSize = 0x10000 / dsp.Channels.Count;
+                int chunkIndex = 0;
+                for (i = 0; i < dataLength;)
+                {   
+                    // calculate general chunk size
+                    var chunkSize = baseChunkSize;
 
-                    if (i < loopStart && i + chunkSize > loopStart && loopStart % chunkSize > 0)
-                        chunkSize = loopStart % chunkSize;
+                    // check if there is a loop chunk
+                    if (loopChunk > 0)
+                    {
+                        // loop point starts after loop chunk
+                        if (chunkIndex == loopIndex + 1)
+                            loopPosition = (int)w.BaseStream.Position;
 
-                    if (i >= loopStart && loopPosition == -1)
-                        loopPosition = (int)w.BaseStream.Position;
+                        // process loop chunk
+                        if (chunkIndex == loopIndex)
+                        {
+                            if (loopSplit)
+                            {
+                                chunkSize = loopChunk + baseChunkSize / 2;
+                            }
+                            else
+                            {
+                                chunkSize = loopChunk;
+                            }
+                        }
 
-                    if (i + chunkSize > dsp.Channels[0].Data.Length)
-                        chunkSize = dsp.Channels[0].Data.Length - i;
+                        // if loop chunk is too small, then take some data from the chunk before it
+                        if (chunkIndex == loopIndex - 1)
+                        {
+                            if (loopSplit)
+                            {
+                                chunkSize = baseChunkSize - baseChunkSize / 2;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (chunkIndex == loopIndex)
+                            loopPosition = (int)w.BaseStream.Position;
+                    }
 
+                    // make sure chunk size is not out of range
+                    if (i + chunkSize > dataLength)
+                        chunkSize = dataLength - i;
+
+                    // keep track of actual data size
+                    int actual_size = chunkSize;
+
+                    // align to 0x20
                     if (chunkSize % 0x20 != 0)
                         chunkSize += 0x20 - (chunkSize % 0x20);
 
+                    // write chunk header
                     var chunkStart = w.BaseStream.Position;
                     w.BaseStream.Position = nextPosition;
                     if (nextPosition != 0)
@@ -173,10 +226,14 @@ namespace MeleeMedia.Audio
                     w.BaseStream.Position = chunkStart;
 
                     w.Write(chunkSize * 2);
-                    w.Write(chunkSize * 2 - 1);
+                    w.Write(actual_size * 2 - 1);
+
+                    System.Diagnostics.Debug.WriteLine(chunkIndex + " " + (chunkSize * 2).ToString("X") + " " + (actual_size * 2).ToString("X"));
+
                     nextPosition = (int)w.BaseStream.Position;
                     w.Write(0); // next offsets
 
+                    // write history data
                     for (var j = 0; j < history.Length; j++)
                     {
                         w.Write((short)dsp.Channels[j].Data[i]);
@@ -186,22 +243,32 @@ namespace MeleeMedia.Audio
 
                     w.Write(0); //padding
 
-                    for (var j = 0; j < history.Length; j++)
+                    // write channel data
+                    for (var j = 0; j < dsp.Channels.Count; j++)
                     {
                         var c = dsp.Channels[j];
+
+                        // create chunk buffer
                         byte[] chunk = new byte[chunkSize];
-                        var unpaddedChunk = chunkSize;
-                        if (i + unpaddedChunk > dsp.Channels[0].Data.Length)
-                            unpaddedChunk = dsp.Channels[0].Data.Length - i;
-                        Array.Copy(c.Data, i, chunk, 0, unpaddedChunk);
-                        var dec = GcAdpcmDecoder.Decode(chunk, c.COEF);
+                        Array.Copy(c.Data, i, chunk, 0, actual_size);
+
+                        byte[] historyChunk = new byte[4];
+                        Array.Copy(c.Data, i, historyChunk, 0, 4);
+
+                        // keep track of decoded history
+                        var dec = GcAdpcmDecoder.Decode(historyChunk, c.COEF);
                         history[j] = (ushort)dec[dec.Length - 2] | ((ushort)dec[dec.Length - 1] << 16);
+
+                        // write chunk
                         w.Write(chunk);
                     }
 
+                    // advance data parsing
                     i += chunkSize;
+                    chunkIndex++;
                 }
 
+                // write loop offset
                 w.BaseStream.Position = nextPosition;
                 w.Write(loopPosition);
             }

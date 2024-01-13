@@ -58,6 +58,19 @@ namespace MeleeMedia.Audio
             }
         }
 
+        public bool LoopSound
+        {
+            get
+            {
+                return Channels.Count > 0 && Channels[0].LoopFlag == 1;
+            }
+            set
+            {
+                foreach (var c in Channels)
+                    c.LoopFlag = (short)(value ? 1 : 0);
+            }
+        }
+
         public string Length
         {
             get
@@ -643,7 +656,7 @@ namespace MeleeMedia.Audio
 
         public override string ToString()
         {
-            var loop = LoopPoint == "00:00:00" ? "" : " : " + LoopPoint;
+            var loop = LoopSound ? " : " + LoopPoint : "";
             return $"{ChannelType} : {Frequency}Hz : {Length}{loop}";
         }
     }
