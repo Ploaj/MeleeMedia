@@ -16,6 +16,12 @@ MeleeMedia.exe (input) (output)
 Example: MeleeMedia.exe in.mp4 out.mth
 Example: MeleeMedia.exe in.mp3 out.dps -loop 00:00:25.34325
 
+Options:
+"-loop (timestamp)"		| sets the loop point for audio HH:MM:SS.FFFFF
+"-comp (level)"			| sets the compression level for videos and images (default: 25 for video, 99 for image)
+"-fps (framerate)"		| sets the framerate for videos (default: 30)
+"-res (width) (height)" | sets the frame resolution (default: 448x336)
+
 Supported Formats:
 Video - mth, mp4
 Image - thp, png, jpeg, jpg

@@ -25,12 +25,25 @@ namespace MeleeMediaCLI
                 for (int i = 0; i < args.Length - 1; i++)
                 {
                     if (args[i] == "-loop")
+                    {
                         loopPoint = args[i + 1];
+                    }
 
                     if (args[i] == "-comp")
                     {
                         long.TryParse(args[i + 1], out video_compression);
-                        long.TryParse(args[i + 1], out image_compression);
+                        image_compression = video_compression;
+                    }
+
+                    if (args[i] == "-fps")
+                    {
+                        int.TryParse(args[i + 1], out frameRate);
+                    }
+
+                    if (args[i] == "-res" && i + 2 < args.Length)
+                    {
+                        int.TryParse(args[i + 1], out frameWidth);
+                        int.TryParse(args[i + 2], out frameHeight);
                     }
                 }
 
