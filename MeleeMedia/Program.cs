@@ -1,5 +1,6 @@
 ﻿using MeleeMedia.Audio;
 using MeleeMedia.Video;
+using MeleeMediaCLI.Video;
 using System;
 using System.Drawing;
 using System.IO;
@@ -15,10 +16,13 @@ namespace MeleeMediaCLI
                 var inf = args[0];
                 var outf = args[1];
 
-                int frameWidth = 448;
-                int frameHeight = 336;
-                int frameRate = 30;
+                // video options
                 long video_compression = 25L;
+                int frameWidth = -1; // 448;
+                int frameHeight = -1; // 336;
+                string outputImageFormat = "bmp";
+
+                // image options
                 long image_compression = 99L;
 
                 string loopPoint = "00:00:00";
@@ -35,15 +39,18 @@ namespace MeleeMediaCLI
                         image_compression = video_compression;
                     }
 
-                    if (args[i] == "-fps")
-                    {
-                        int.TryParse(args[i + 1], out frameRate);
-                    }
-
                     if (args[i] == "-res" && i + 2 < args.Length)
                     {
-                        int.TryParse(args[i + 1], out frameWidth);
-                        int.TryParse(args[i + 2], out frameHeight);
+                        if (int.TryParse(args[i + 1], out frameWidth) &&
+                            int.TryParse(args[i + 2], out frameHeight))
+                        {
+                            Console.WriteLine($"Frame Size set to {frameWidth} {frameHeight}");
+                        }
+                    }
+
+                    if (args[i] == "-ext")
+                    {
+                        outputImageFormat = args[i + 1];
                     }
                 }
 
@@ -108,14 +115,26 @@ namespace MeleeMediaCLI
                         break;
 
                     case ".mth":
-                        if (oext == ".mp4")
-                            VideoConverter.MTHtoMP4(new MTH(inf), outf);
+                        if (oext == "")
+                        {
+                            if (!VideoConverter.MTHtoImages(new MTH(inf), outf, outputImageFormat))
+                            {
+                                Console.WriteLine($"Unsupported export format " + oext);
+                            }
+                        }
                         else
+                        if (oext == ".mp4")
+                        {
+                            VideoConverter.MTHtoMP4(inf, outf);
+                        }
+                        else
+                        {
                             Console.WriteLine($"Unsupported export format " + oext);
+                        }
                         break;
                     case ".mp4":
                         if (oext == ".mth")
-                            VideoConverter.MP4toMTH(inf, frameWidth, frameHeight, frameRate, video_compression).Save(outf);
+                            VideoConverter.MP4toMTH(inf, outf, frameWidth, frameHeight, video_compression);
                         else
                             Console.WriteLine($"Unsupported export format " + oext);
                         break;
@@ -136,7 +155,7 @@ namespace MeleeMediaCLI
                     case ".jpg":
                         if (oext == ".thp")
                             using (var bmp = new Bitmap(inf))
-                                THP.FromBitmap(bmp, image_compression).Save(outf);
+                                bmp.ToTHP(image_compression).Save(outf);
                         else
                             Console.WriteLine($"Unsupported export format " + oext);
                         break;

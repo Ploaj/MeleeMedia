@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 
@@ -11,7 +10,7 @@ namespace MeleeMedia.Video
     /// </summary>
     public class MTH
     {
-        private List<THP> Frames = new List<THP>();
+        private readonly List<THP> Frames = new List<THP>();
 
         public short VersionMajor { get; internal set; } = 0x08;
         public short VersionMinor { get; internal set; } = 0x00;
@@ -64,15 +63,11 @@ namespace MeleeMedia.Video
 
                 r.BaseStream.Position = videoOff;
 
-                var max = videoSize;
                 for (int f = 0; f < frameCount; f++)
                 {
                     var nextVideoSize = BitConverter.ToInt32(r.ReadBytes(4).Reverse().ToArray(), 0);
-
                     Frames.Add(new THP(r.ReadBytes(videoSize - 4)));
-
                     videoSize = nextVideoSize;
-                    max = Math.Max(max, videoSize);
                 }
             }
         }
@@ -157,9 +152,9 @@ namespace MeleeMedia.Video
         /// 
         /// </summary>
         /// <param name="bmp"></param>
-        public void AddFrame(Bitmap bmp, long compression)
+        public void AddFrame(THP thp)
         {
-            Frames.Add(THP.FromBitmap(bmp, compression));
+            Frames.Add(thp);
         }
 
         /// <summary>

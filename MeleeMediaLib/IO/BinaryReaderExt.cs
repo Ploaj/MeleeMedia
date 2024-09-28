@@ -61,7 +61,7 @@ namespace MeleeMedia.IO
             string str = "";
             byte ch;
             while ((ch = ReadByte()) != 0)
-                str = str + (char)ch;
+                str += (char)ch;
             return str;
         }
 
@@ -73,24 +73,10 @@ namespace MeleeMedia.IO
                 byte b = ReadByte();
                 if (b != 0)
                 {
-                    str = str + (char)b;
+                    str += (char)b;
                 }
             }
             return str;
-        }
-
-        public string ReadString(int Offset, int Size)
-        {
-            var temp = Position;
-            Position = (uint)Offset;
-            StringBuilder str = new StringBuilder();
-            var b = 0;
-            while ((b = ReadByte()) != 0 && Position < Length)
-            {
-                str.Append((char)b);
-            }
-            Position = temp;
-            return str.ToString();
         }
         
         public uint Position
@@ -141,7 +127,7 @@ namespace MeleeMedia.IO
                 byte b = ReadByte();
                 while (b != 0)
                 {
-                    str = str + (char)b;
+                    str += (char)b;
                     b = ReadByte();
                 }
             }
@@ -152,7 +138,7 @@ namespace MeleeMedia.IO
                     byte b = ReadByte();
                     if (b != 0)
                     {
-                        str = str + (char)b;
+                        str += (char)b;
                     }
                 }
             }

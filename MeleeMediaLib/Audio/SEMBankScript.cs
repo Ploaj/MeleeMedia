@@ -16,7 +16,7 @@ namespace MeleeMedia.Audio
         /// <summary>
         /// 
         /// </summary>
-        public List<SEMCode> Codes = new List<SEMCode>();
+        public List<SEMCode> Codes { get; set; } = new List<SEMCode>();
 
         /// <summary>
         /// Returns the scripts sfxid if it has one and -1 otherwise
@@ -41,15 +41,6 @@ namespace MeleeMedia.Audio
                     sfx.Value = value;
             }
         }
-
-        /// <summary>
-        /// Removes unused codes from the script
-        /// </summary>
-        private void Clean()
-        {
-            Codes.RemoveAll(e => e.Code == SEM_CODE.NULL);
-        }
-
         /// <summary>
         /// Loads script from op codes
         /// </summary>
@@ -61,7 +52,6 @@ namespace MeleeMedia.Audio
                 Codes.Add(new SEMCode((uint)script));
             }
         }
-
         /// <summary>
         /// exports script to op codes
         /// </summary>
@@ -82,7 +72,6 @@ namespace MeleeMedia.Audio
 
             return codes;
         }
-
         /// <summary>
         /// 
         /// </summary>

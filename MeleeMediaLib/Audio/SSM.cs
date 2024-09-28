@@ -97,10 +97,11 @@ namespace MeleeMedia.Audio
                     sound.Channels.Clear();
                     for (int j = 0; j < ChannelCount; j++)
                     {
-                        var channel = new DSPChannel();
-
-                        channel.LoopFlag = r.ReadInt16();
-                        channel.Format = r.ReadInt16();
+                        var channel = new DSPChannel()
+                        {
+                            LoopFlag = r.ReadInt16(),
+                            Format = r.ReadInt16(),
+                        };
                         var LoopStartOffset = r.ReadInt32();
                         var LoopEndOffset = r.ReadInt32();
                         var CurrentAddress = r.ReadInt32();
@@ -137,8 +138,7 @@ namespace MeleeMedia.Audio
         /// <param name="filePath"></param>
         public void Save(string filePath)
         {
-            int bf;
-            Save(filePath, out bf);
+            Save(filePath, out int _);
         }
 
         /// <summary>

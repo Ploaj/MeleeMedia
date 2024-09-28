@@ -33,10 +33,11 @@ namespace MeleeMedia.Audio
 
                 for (int i = 0; i < channelCount; i++)
                 {
-                    var channel = new DSPChannel();
-
-                    channel.LoopFlag = r.ReadInt16();
-                    channel.Format = r.ReadInt16();
+                    var channel = new DSPChannel()
+                    {
+                        LoopFlag = r.ReadInt16(),
+                        Format = r.ReadInt16(),
+                    };
                     var SA = r.ReadInt32();
                     var EA = r.ReadInt32();
                     var CA = r.ReadInt32();
@@ -110,9 +111,9 @@ namespace MeleeMedia.Audio
         /// </summary>
         /// <param name="dsp"></param>
         /// <param name="filePath"></param>
-        public static void SaveDSPAsHPS(DSP dsp, string filePath)
+        public static void WriteDSPAsHPS(DSP dsp, Stream s)
         {
-            using (BinaryWriterExt w = new BinaryWriterExt(new FileStream(filePath, FileMode.Create)))
+            using (BinaryWriterExt w = new BinaryWriterExt(s))
             {
                 w.BigEndian = true;
 

@@ -1,6 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 
 namespace MeleeMedia.Video
@@ -20,7 +18,6 @@ namespace MeleeMedia.Video
         {
             Data = data;
         }
-
         /// <summary>
         /// 
         /// </summary>
@@ -29,48 +26,6 @@ namespace MeleeMedia.Video
         {
             File.WriteAllBytes(filePath, Data);
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="format"></param>
-        /// <returns></returns>
-        private static ImageCodecInfo GetEncoder(ImageFormat format)
-        {
-            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
-            foreach (ImageCodecInfo codec in codecs)
-            {
-                if (codec.FormatID == format.Guid)
-                {
-                    return codec;
-                }
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="bmp"></param>
-        /// <returns></returns>
-        public static THP FromBitmap(Bitmap bmp, long compression)
-        {
-            using (MemoryStream stream = new MemoryStream())
-            {
-                ImageCodecInfo jpgEncoder = GetEncoder(ImageFormat.Jpeg);
-                Encoder myEncoder = Encoder.Quality;
-                EncoderParameters myEncoderParameters = new EncoderParameters(1);
-
-                EncoderParameter myEncoderParameter = new EncoderParameter(myEncoder, compression);
-                myEncoderParameters.Param[0] = myEncoderParameter;
-
-                bmp.Save(stream, jpgEncoder, myEncoderParameters);
-                //bmp.Save(stream, ImageFormat.Jpeg);
-
-                return FromJPEG(stream.ToArray());
-            }
-        }
-
         /// <summary>
         /// 
         /// </summary>
@@ -79,20 +34,6 @@ namespace MeleeMedia.Video
         {
             return new THP(JPEGCONV(Data, true));
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <returns></returns>
-        public Bitmap ToBitmap()
-        {
-            Bitmap bmp;
-            {
-                bmp = new Bitmap(new MemoryStream(ToJPEG()));
-            }
-            return bmp;
-        }
-
         /// <summary>
         /// 
         /// </summary>
@@ -101,7 +42,6 @@ namespace MeleeMedia.Video
         {
             return JPEGCONV(Data, false);
         }
-
         /// <summary>
         /// 
         /// </summary>
@@ -122,7 +62,7 @@ namespace MeleeMedia.Video
                     throw new InvalidDataException("JPEG is not valid");
                 }
 
-                var length = 0;
+                int length;
 
                 if (pay == 0xDA)
                 {
@@ -133,23 +73,12 @@ namespace MeleeMedia.Video
                     int j;
                     for (j = i; j < data.Length; j++)
                     {
-                        var end = data[j] == 0xFF && data[j] == 0xD9;
-
-                        if (!end)
-                        {
-                            frameConv.Add(data[j]);
-                            if (data[j] == 0xFF)
-                                if (encode)
-                                    j++;
-                                else
-                                    frameConv.Add(0x00);
-                        }
-                        else
-                        {
-                            frameConv.Add(0xFF);
-                            frameConv.Add(0xD9);
-                            break;
-                        }
+                        frameConv.Add(data[j]);
+                        if (data[j] == 0xFF)
+                            if (encode)
+                                j++;
+                            else
+                                frameConv.Add(0x00);
                     }
                     i = j;
 
@@ -199,6 +128,5 @@ namespace MeleeMedia.Video
 
             return frameConv.ToArray();
         }
-
     }
 }

@@ -44,13 +44,13 @@ namespace MeleeMedia.Audio
             get => _value; 
             set
             {
-                _value = Math.Max(MinValue(), Math.Min(value, MaxValue()));
+                _value = Math.Max(MinValue, Math.Min(value, MaxValue));
             }
         }
 
         private int _value;
 
-        public int Timer { get => _timer; set => _timer = Math.Max(0, Math.Min(value, MaxTimer())); }
+        public int Timer { get => _timer; set => _timer = Math.Max(0, Math.Min(value, MaxTimer)); }
 
         private int _timer;
 
@@ -206,121 +206,136 @@ namespace MeleeMedia.Audio
             }
         }
 
-        public bool HasTimer()
+        public bool HasTimer
         {
-            switch (Code)
+            get 
             {
-                case SEM_CODE.SET_TIMER:
-                case SEM_CODE.PLAY:
-                case SEM_CODE.PLAY_ADD_VOLUME:
-                case SEM_CODE.SET_CHANNEL_BALANCE:
-                case SEM_CODE.ADD_CHANNEL_BALANCE:
-                case SEM_CODE.SET_UNUSED:
-                case SEM_CODE.ADD_UNUSED:
-                case SEM_CODE.SET_PITCH:
-                case SEM_CODE.ADD_PITCH:
-                case SEM_CODE.SET_REVERB1:
-                case SEM_CODE.ADD_REVERB1:
-                case SEM_CODE.SET_REVERB2:
-                case SEM_CODE.ADD_REVERB2:
-                    return true;
-                default:
-                    return false;
+                switch (Code)
+                {
+                    case SEM_CODE.SET_TIMER:
+                    case SEM_CODE.PLAY:
+                    case SEM_CODE.PLAY_ADD_VOLUME:
+                    case SEM_CODE.SET_CHANNEL_BALANCE:
+                    case SEM_CODE.ADD_CHANNEL_BALANCE:
+                    case SEM_CODE.SET_UNUSED:
+                    case SEM_CODE.ADD_UNUSED:
+                    case SEM_CODE.SET_PITCH:
+                    case SEM_CODE.ADD_PITCH:
+                    case SEM_CODE.SET_REVERB1:
+                    case SEM_CODE.ADD_REVERB1:
+                    case SEM_CODE.SET_REVERB2:
+                    case SEM_CODE.ADD_REVERB2:
+                        return true;
+                    default:
+                        return false;
+                    }
+                }
+        }
+
+        public int MaxTimer
+        {
+            get
+            {
+                switch (Code)
+                {
+                    case SEM_CODE.SET_TIMER:
+                        return 0xFFFFFF;
+                    case SEM_CODE.PLAY:
+                    case SEM_CODE.PLAY_ADD_VOLUME:
+                    case SEM_CODE.SET_CHANNEL_BALANCE:
+                    case SEM_CODE.ADD_CHANNEL_BALANCE:
+                    case SEM_CODE.SET_UNUSED:
+                    case SEM_CODE.ADD_UNUSED:
+                    case SEM_CODE.SET_REVERB1:
+                    case SEM_CODE.ADD_REVERB1:
+                    case SEM_CODE.SET_REVERB2:
+                    case SEM_CODE.ADD_REVERB2:
+                        return ushort.MaxValue;
+                    case SEM_CODE.SET_PITCH:
+                    case SEM_CODE.ADD_PITCH:
+                        return byte.MaxValue;
+                    default:
+                        return 0;
+                }
             }
         }
 
-        public int MaxTimer()
+        public bool HasValue
         {
-            switch (Code)
+            get
             {
-                case SEM_CODE.SET_TIMER:
-                    return 0xFFFFFF;
-                case SEM_CODE.PLAY:
-                case SEM_CODE.PLAY_ADD_VOLUME:
-                case SEM_CODE.SET_CHANNEL_BALANCE:
-                case SEM_CODE.ADD_CHANNEL_BALANCE:
-                case SEM_CODE.SET_UNUSED:
-                case SEM_CODE.ADD_UNUSED:
-                case SEM_CODE.SET_REVERB1:
-                case SEM_CODE.ADD_REVERB1:
-                case SEM_CODE.SET_REVERB2:
-                case SEM_CODE.ADD_REVERB2:
-                    return ushort.MaxValue;
-                case SEM_CODE.SET_PITCH:
-                case SEM_CODE.ADD_PITCH:
-                    return byte.MaxValue;
-                default:
-                    return 0;
+                switch (Code)
+                {
+                    case SEM_CODE.SET_TIMER:
+                    case SEM_CODE.END_PLAYBACK:
+                    case SEM_CODE.LOOP_PLAYBACK:
+                        return false;
+                    default:
+                        return true;
+                }
             }
         }
 
-        public bool HasValue()
+        public int MinValue
         {
-            switch (Code)
+            get
             {
-                case SEM_CODE.SET_TIMER:
-                case SEM_CODE.END_PLAYBACK:
-                case SEM_CODE.LOOP_PLAYBACK:
-                    return false;
-                default:
-                    return true;
+                switch (Code)
+                {
+                    case SEM_CODE.SET_SFXID:
+                        return -1;
+                    case SEM_CODE.PLAY_ADD_VOLUME:
+                    case SEM_CODE.ADD_CHANNEL_BALANCE:
+                    case SEM_CODE.SET_CHANNEL_BALANCE:
+                    case SEM_CODE.ADD_UNUSED:
+                    case SEM_CODE.ADD_REVERB1:
+                    case SEM_CODE.ADD_REVERB2:
+                    case SEM_CODE.SET_REVERB1:
+                    case SEM_CODE.SET_REVERB2:
+                        return sbyte.MinValue;
+                    case SEM_CODE.SET_PITCH:
+                    case SEM_CODE.ADD_PITCH:
+                        return short.MinValue;
+                    case SEM_CODE.ADD_PRIORITY:
+                        return -0x1000000;
+                    default:
+                        return 0;
+                }
             }
         }
 
-        public int MinValue()
+        public int MaxValue
         {
-            switch (Code)
+            get
             {
-                case SEM_CODE.SET_SFXID:
-                    return -1;
-                case SEM_CODE.PLAY_ADD_VOLUME:
-                case SEM_CODE.ADD_CHANNEL_BALANCE:
-                case SEM_CODE.SET_CHANNEL_BALANCE:
-                case SEM_CODE.ADD_UNUSED:
-                case SEM_CODE.ADD_REVERB1:
-                case SEM_CODE.ADD_REVERB2:
-                case SEM_CODE.SET_REVERB1:
-                case SEM_CODE.SET_REVERB2:
-                    return sbyte.MinValue;
-                case SEM_CODE.SET_PITCH:
-                case SEM_CODE.ADD_PITCH:
-                    return short.MinValue;
-                case SEM_CODE.ADD_PRIORITY:
-                    return -0x1000000;
-                default:
-                    return 0;
-            }
-        }
-
-        public int MaxValue()
-        {
-            switch (Code)
-            {
-                case SEM_CODE.PLAY:
-                case SEM_CODE.PLAY_ADD_VOLUME:
-                case SEM_CODE.SET_CHANNEL_BALANCE:
-                case SEM_CODE.ADD_CHANNEL_BALANCE:
-                case SEM_CODE.SET_UNUSED:
-                case SEM_CODE.ADD_UNUSED:
-                case SEM_CODE.SET_REVERB1:
-                case SEM_CODE.ADD_REVERB1:
-                case SEM_CODE.SET_REVERB2:
-                case SEM_CODE.ADD_REVERB2:
-                    return byte.MaxValue;
-                case SEM_CODE.SET_PITCH:
-                case SEM_CODE.ADD_PITCH:
-                    return short.MaxValue;
-                case SEM_CODE.SET_SFXID:
-                case SEM_CODE.SET_LOOP:
-                case SEM_CODE.EXECUTE_LOOP:
-                case SEM_CODE.SET_PRIORITY:
-                case SEM_CODE.ADD_PRIORITY:
-                case SEM_CODE.SET_REVERB3:
-                case SEM_CODE.SET_REVERB4:
-                case SEM_CODE.NULL:
-                    return 0xFFFFFF;
-                default:
-                    return 0;
+                switch (Code)
+                {
+                    case SEM_CODE.PLAY:
+                    case SEM_CODE.PLAY_ADD_VOLUME:
+                    case SEM_CODE.SET_CHANNEL_BALANCE:
+                    case SEM_CODE.ADD_CHANNEL_BALANCE:
+                    case SEM_CODE.SET_UNUSED:
+                    case SEM_CODE.ADD_UNUSED:
+                    case SEM_CODE.SET_REVERB1:
+                    case SEM_CODE.ADD_REVERB1:
+                    case SEM_CODE.SET_REVERB2:
+                    case SEM_CODE.ADD_REVERB2:
+                        return byte.MaxValue;
+                    case SEM_CODE.SET_PITCH:
+                    case SEM_CODE.ADD_PITCH:
+                        return short.MaxValue;
+                    case SEM_CODE.SET_SFXID:
+                    case SEM_CODE.SET_LOOP:
+                    case SEM_CODE.EXECUTE_LOOP:
+                    case SEM_CODE.SET_PRIORITY:
+                    case SEM_CODE.ADD_PRIORITY:
+                    case SEM_CODE.SET_REVERB3:
+                    case SEM_CODE.SET_REVERB4:
+                    case SEM_CODE.NULL:
+                        return 0xFFFFFF;
+                    default:
+                        return 0;
+                }
             }
         }
 
@@ -330,8 +345,8 @@ namespace MeleeMedia.Audio
         /// <returns></returns>
         public override string ToString()
         {
-            var value = HasValue() ? " = " + Value : "";
-            var timer = HasTimer() && Timer != 0 ? $" then wait {Timer} ticks" : "";
+            var value = HasValue ? " = " + Value : "";
+            var timer = HasTimer && Timer != 0 ? $" then wait {Timer} ticks" : "";
             return $"{Code}{value}{timer}";
         }
     }

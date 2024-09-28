@@ -5,7 +5,7 @@ namespace MeleeMedia.Audio
 {
     public static class GcAdpcmDecoder
     {
-        public static short[] Decode(byte[] adpcm, short[] coefficients)
+        public static short[] Decode(byte[] adpcm, short[] coefficients, short hist1 = 0, short hist2 = 0)
         {
             var SampleCount = ByteCountToSampleCount(adpcm.Length);
             //config = config ?? new GcAdpcmParameters { SampleCount = ByteCountToSampleCount(adpcm.Length) };
@@ -20,8 +20,8 @@ namespace MeleeMedia.Audio
             int currentSample = 0;
             int outIndex = 0;
             int inIndex = 0;
-            short hist1 = 0; //config.History1;
-            short hist2 = 0; //config.History2;
+            //short hist1 = 0; //config.History1;
+            //short hist2 = 0; //config.History2;
 
             for (int i = 0; i < frameCount; i++)
             {

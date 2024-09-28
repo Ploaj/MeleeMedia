@@ -80,8 +80,10 @@ namespace MeleeMedia.Audio
                 Flags = r.ReadUInt32();
 
                 var ssmSize = r.ReadInt32();
-                ScriptBank = new SEMBank();
-                ScriptBank.Scripts = new SEMBankScript[r.ReadInt32()];
+                ScriptBank = new SEMBank()
+                {
+                    Scripts = new SEMBankScript[r.ReadInt32()]
+                };
 
                 for (int i = 0; i < ScriptBank.Scripts.Length; i++)
                 {

@@ -9,12 +9,6 @@ namespace MeleeMedia.Audio
         /// <summary>
         /// 
         /// </summary>
-        private static readonly int NullEntryID = 55;
-
-
-        /// <summary>
-        /// 
-        /// </summary>
         /// <param name="filePath"></param>
         /// <returns></returns>
         public static List<SEMBank> ReadSEMFile(string filePath)
@@ -22,7 +16,6 @@ namespace MeleeMedia.Audio
             using (var stream = new FileStream(filePath, FileMode.Open))
                 return ReadSEMFile(stream);
         }
-
         /// <summary>
         /// 
         /// </summary>
@@ -33,7 +26,6 @@ namespace MeleeMedia.Audio
             using (var stream = new MemoryStream(data))
                 return ReadSEMFile(stream);
         }
-
         /// <summary>
         /// 
         /// </summary>
@@ -83,21 +75,30 @@ namespace MeleeMedia.Audio
             }
             return entries;
         }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="path"></param>
+        /// <param name="entries"></param>
+        public static void SaveSEMFile(string path, List<SEMBank> entries)
+        {
+            using (var stream = new FileStream(path, FileMode.Create))
+                SaveSEMFile(stream, entries);
+        }
         /// <summary>
         /// Generates and saves a SEM file
         /// </summary>
-        public static void SaveSEMFile(string path, List<SEMBank> Entries)
+        public static void SaveSEMFile(Stream stream, List<SEMBank> entries)
         {
-            using (BinaryWriterExt w = new BinaryWriterExt(new FileStream(path, FileMode.Create)))
+            using (BinaryWriterExt w = new BinaryWriterExt(stream))
             {
                 w.BigEndian = true;
 
                 w.Write(0);
                 w.Write(0);
-                w.Write(Entries.Count);
+                w.Write(entries.Count);
                 int index = 0;
-                foreach (var e in Entries)
+                foreach (var e in entries)
                 {
                     w.Write(index);
                     index += e.Scripts.Length;
@@ -107,7 +108,7 @@ namespace MeleeMedia.Audio
                 var offset = w.BaseStream.Position + 4 * index + 4;
                 var dataindex = 0;
 
-                foreach (var e in Entries)
+                foreach (var e in entries)
                 {
                     foreach (var v in e.Scripts)
                     {
@@ -118,7 +119,7 @@ namespace MeleeMedia.Audio
 
                 w.Write(0);
 
-                foreach (var e in Entries)
+                foreach (var e in entries)
                     foreach (var v in e.Scripts)
                         w.Write(v.Compile());
             }

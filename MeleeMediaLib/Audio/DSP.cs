@@ -1,6 +1,7 @@
 ﻿using MeleeMedia.IO;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 
 namespace MeleeMedia.Audio
@@ -43,18 +44,30 @@ namespace MeleeMedia.Audio
         {
             get
             {
-                if (Channels.Count == 0)
-                    return "0:00";
-                var sec = (int)Math.Ceiling(Channels[0].LoopStart / 2 / (double)Frequency * 1.75f * 1000);
-                return TimeSpan.FromMilliseconds(sec).ToString();
+                return TimeSpan.FromMilliseconds(LoopPointMilliseconds).ToString();
             }
             set
             {
-                TimeSpan ts;
-                if (TimeSpan.TryParse(value, out ts))
+                if (TimeSpan.TryParse(value, out TimeSpan ts))
                 {
-                    SetLoopFromTimeSpan(ts);
+                    LoopPointMilliseconds = ts.TotalMilliseconds;
                 }
+            }
+        }
+
+        public double LoopPointMilliseconds
+        {
+            get
+            {
+                if (Channels.Count == 0) return 0;
+                return Channels[0].LoopStart / Channels.Count / (double)Frequency * 1.75f * 1000;
+            }
+            set
+            {
+                var sec = (value / 1.75f / 1000f) * Channels.Count * Frequency;
+
+                foreach (var c in Channels)
+                    c.LoopStart = (int)sec;
             }
         }
 
@@ -71,14 +84,20 @@ namespace MeleeMedia.Audio
             }
         }
 
+        public double TotalMilliseconds
+        {
+            get
+            {
+                if (Channels.Count == 0) return 0;
+                return Channels[0].Data.Length / (double)Frequency * 1.75f * 1000;
+            }
+        }
+
         public string Length
         {
             get
             {
-                if (Channels.Count == 0)
-                    return "0:00";
-                var sec = (int)Math.Ceiling(Channels[0].Data.Length / (double)Frequency * 1.75f * 1000);
-                return TimeSpan.FromMilliseconds(sec).ToString();
+                return TimeSpan.FromMilliseconds(TotalMilliseconds).ToString();
             }
         }
 
@@ -128,9 +147,9 @@ namespace MeleeMedia.Audio
         /// 
         /// </summary>
         /// <param name="filePath"></param>
-        public void FromFile(string filePath)
+        public bool FromFile(string filePath)
         {
-            FromFormat(File.ReadAllBytes(filePath), Path.GetExtension(filePath));
+            return FromFormat(File.ReadAllBytes(filePath), Path.GetExtension(filePath));
         }
 
         /// <summary>
@@ -138,22 +157,31 @@ namespace MeleeMedia.Audio
         /// </summary>
         /// <param name="data"></param>
         /// <param name="format"></param>
-        public void FromFormat(byte[] data, string format)
+        public bool FromFormat(byte[] data, string format)
         {
-            format = format.Replace(".", "").ToLower();
-
-            switch (format)
+            try
             {
-                case "wav":
-                    FromWAVE(data);
-                    break;
-                case "dsp":
-                    FromDSP(data);
-                    break;
-                case "hps":
-                    FromHPS(data);
-                    break;
+                switch (format.ToLower())
+                {
+                    case ".brstm":
+                        FromBRSTM(data);
+                        return true;
+                    case ".wav":
+                        FromWAVE(data);
+                        return true;
+                    case ".dsp":
+                        FromDSP(data);
+                        return true;
+                    case ".hps":
+                        FromHPS(data);
+                        return true;
+                }
             }
+            catch
+            {
+                return false;
+            }
+            return false;
         }
 
         /// <summary>
@@ -167,13 +195,14 @@ namespace MeleeMedia.Audio
             switch (ext)
             {
                 case ".wav":
-                    File.WriteAllBytes(filePath, ToWAVE());
+                    File.WriteAllBytes(filePath, ToWAVE().ToFile());
                     break;
                 case ".dsp":
                     ExportDSP(filePath);
                     break;
                 case ".hps":
-                    HPS.SaveDSPAsHPS(this, filePath);
+                    using (var fs = new FileStream(filePath, FileMode.Create))
+                        HPS.WriteDSPAsHPS(this, fs);
                     break;
             }
         }
@@ -191,12 +220,13 @@ namespace MeleeMedia.Audio
                 var nibbleCount = r.ReadInt32();
                 Frequency = r.ReadInt32();
 
-                var channel = new DSPChannel();
-
-                channel.LoopFlag = r.ReadInt16();
-                channel.Format = r.ReadInt16();
+                var channel = new DSPChannel()
+                {
+                    LoopFlag = r.ReadInt16(),
+                    Format = r.ReadInt16(),
+                };
                 var LoopStartOffset = r.ReadInt32();
-                var LoopEndOffset = r.ReadInt32();
+                r.ReadInt32(); // LoopEndOffset
                 var CurrentAddress = r.ReadInt32();
                 for (int k = 0; k < 0x10; k++)
                     channel.COEF[k] = r.ReadInt16();
@@ -308,137 +338,64 @@ namespace MeleeMedia.Audio
 
         #region WAVE
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="wavFile"></param>
         public void FromWAVE(byte[] wavFile)
         {
-            if (wavFile.Length < 0x2C)
-                throw new NotSupportedException("File is not a valid WAVE file");
+            var wav = new WAVE();
+            wav.Read(wavFile);
+
+            Frequency = wav.Frequency;
 
             Channels.Clear();
-
-            using (BinaryReader r = new BinaryReader(new MemoryStream(wavFile)))
+            foreach (var data in wav.Channels)
             {
-                if (new string(r.ReadChars(4)) != "RIFF")
-                    throw new NotSupportedException("File is not a valid WAVE file");
+                var c = new DSPChannel();
 
-                r.BaseStream.Position = 0x14;
-                var comp = r.ReadInt16();
-                var channelCount = r.ReadInt16();
-                Frequency = r.ReadInt32();
-                r.ReadInt32();// block rate
-                r.ReadInt16();// block align
-                var bpp = r.ReadInt16();
+                var ss = data;
 
-                if (comp != 1)
-                    throw new NotSupportedException("Compressed WAVE files not supported");
+                c.COEF = GcAdpcmCoefficients.CalculateCoefficients(ss);
 
-                if (bpp != 16)
-                    throw new NotSupportedException("Only 16 bit WAVE formats accepted");
+                c.Data = GcAdpcmEncoder.Encode(ss, c.COEF);
 
-                while (r.ReadByte() == 0) ;
-                r.BaseStream.Seek(-1, SeekOrigin.Current);
+                c.NibbleCount = GcAdpcmMath.SampleCountToNibbleCount(ss.Length);
 
-                while (new string(r.ReadChars(4)) != "data")
-                {
-                    var skip = r.ReadInt32();
-                    r.BaseStream.Position += skip;
-                }
+                c.InitialPredictorScale = c.Data[0];
 
-                var channelSizes = r.ReadInt32() / channelCount / 2;
+                Channels.Add(c);
+            }
 
-                List<List<short>> channels = new List<List<short>>();
-
-                for (int i = 0; i < channelCount; i++)
-                    channels.Add(new List<short>());
-
-                for (int i = 0; i < channelSizes; i++)
-                {
-                    foreach (var v in channels)
-                    {
-                        v.Add(r.ReadInt16());
-                    }
-                }
-
-                Channels.Clear();
-                foreach (var data in channels)
-                {
-                    var c = new DSPChannel();
-
-                    var ss = data.ToArray();
-
-                    c.COEF = GcAdpcmCoefficients.CalculateCoefficients(ss);
-
-                    c.Data = GcAdpcmEncoder.Encode(ss, c.COEF);
-
-                    c.NibbleCount = GcAdpcmMath.SampleCountToNibbleCount(ss.Length);
-
-                    c.InitialPredictorScale = c.Data[0];
-
-                    Channels.Add(c);
-                }
-
+            if (wav.LoopPoint != 0)
+            {
+                LoopSound = true;
+                LoopPointMilliseconds = wav.LoopPoint / (double)wav.Frequency * 1000.0;
             }
         }
-
         /// <summary>
         /// Wraps the decoded DSP data into a WAVE file stored as a byte array
         /// </summary>
         /// <returns></returns>
-        public byte[] ToWAVE()
+        public WAVE ToWAVE()
         {
-            using (var stream = new MemoryStream())
+            WAVE wav = new WAVE()
             {
-                using (BinaryWriter w = new BinaryWriter(stream))
-                {
-                    w.Write("RIFF".ToCharArray());
-                    w.Write(0); // wave size
+                Frequency = Frequency,
+                BitsPerSample = 16,
+            };
 
-                    w.Write("WAVE".ToCharArray());
-
-                    short BitsPerSample = 16;
-                    var byteRate = Frequency * Channels.Count * BitsPerSample / 8;
-                    short blockAlign = (short)(Channels.Count * BitsPerSample / 8);
-
-                    w.Write("fmt ".ToCharArray());
-                    w.Write(16); // chunk size
-                    w.Write((short)1); // compression
-                    w.Write((short)Channels.Count);
-                    w.Write(Frequency);
-                    w.Write(byteRate);
-                    w.Write(blockAlign);
-                    w.Write(BitsPerSample);
-
-                    w.Write("data".ToCharArray());
-                    var subchunkOffset = w.BaseStream.Position;
-                    w.Write(0);
-
-                    int subChunkSize = 0;
-                    if (Channels.Count == 1)
-                    {
-                        short[] sound_data = GcAdpcmDecoder.Decode(Channels[0].Data, Channels[0].COEF);
-                        subChunkSize += sound_data.Length * 2;
-                        foreach (var s in sound_data)
-                            w.Write(s);
-                    }
-                    if (Channels.Count == 2)
-                    {
-                        short[] sound_data1 = GcAdpcmDecoder.Decode(Channels[0].Data, Channels[0].COEF);
-                        short[] sound_data2 = GcAdpcmDecoder.Decode(Channels[1].Data, Channels[1].COEF);
-                        subChunkSize += (sound_data1.Length + sound_data2.Length) * 2;
-                        for (int i = 0; i < sound_data1.Length; i++)
-                        {
-                            w.Write(sound_data1[i]);
-                            w.Write(sound_data2[i]);
-                        }
-                    }
-
-                    w.BaseStream.Position = subchunkOffset;
-                    w.Write(subChunkSize);
-
-                    w.BaseStream.Position = 4;
-                    w.Write((int)(w.BaseStream.Length - 8));
-                }
-                return stream.ToArray();
+            foreach (var c in Channels)
+            {
+                wav.Channels.Add(GcAdpcmDecoder.Decode(c.Data, c.COEF));
             }
+
+            if (LoopSound)
+            {
+                wav.LoopPoint = (int)(LoopPointMilliseconds / 1000.0 * wav.Frequency);
+            }
+
+            return wav;
         }
 
         #endregion
@@ -463,6 +420,17 @@ namespace MeleeMedia.Audio
         public void FromBRSTM(string filePath)
         {
             using (FileStream s = new FileStream(filePath, FileMode.Open))
+                FromBRSTM(s);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dsp"></param>
+        /// <param name="filePath"></param>
+        public void FromBRSTM(byte[] filedata)
+        {
+            using (MemoryStream s = new MemoryStream(filedata))
                 FromBRSTM(s);
         }
 
