@@ -93,6 +93,10 @@ namespace MeleeMedia.Audio
                                 c.LoopStart = OffsetToLoopPosition[next];
                             }
                         }
+                        else
+                        {
+                            dsp.LoopSound = false;
+                        }
                         break;
                     }
                     else
@@ -142,8 +146,16 @@ namespace MeleeMedia.Audio
                 // now divide into chunks taking into account loop point
 
                 var loopStart = dsp.Channels[0].LoopStart / 2;
-                if (loopStart != 0 && loopStart % 56 == 0)
-                    loopStart += 56 - (loopStart % 56);
+                if (dsp.LoopSound)
+                {
+                    if (loopStart != 0 &&
+                        loopStart % 56 == 0)
+                        loopStart += 56 - (loopStart % 56);
+                }
+                else
+                {
+                    loopStart = 0;
+                }
                 var loopPosition = -1;
                 var nextPosition = 0;
 
@@ -204,7 +216,8 @@ namespace MeleeMedia.Audio
                     }
                     else
                     {
-                        if (chunkIndex == loopIndex)
+                        if (dsp.LoopSound &&
+                            chunkIndex == loopIndex)
                             loopPosition = (int)w.BaseStream.Position;
                     }
 
@@ -229,7 +242,7 @@ namespace MeleeMedia.Audio
                     w.Write(chunkSize * 2);
                     w.Write(actual_size * 2 - 1);
 
-                    System.Diagnostics.Debug.WriteLine(chunkIndex + " " + (chunkSize * 2).ToString("X") + " " + (actual_size * 2).ToString("X"));
+                    //System.Diagnostics.Debug.WriteLine(chunkIndex + " " + (chunkSize * 2).ToString("X") + " " + (actual_size * 2).ToString("X"));
 
                     nextPosition = (int)w.BaseStream.Position;
                     w.Write(0); // next offsets
