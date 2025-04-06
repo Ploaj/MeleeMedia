@@ -22,14 +22,14 @@ namespace MeleeMediaCLI.Video
 
             switch (ext)
             {
-                case "jpg":
-                case "jpeg":
+                case ".jpg":
+                case ".jpeg":
                     System.IO.File.WriteAllBytes(filePath, thp.ToJPEG());
                     return;
-                case "bmp":
+                case ".bmp":
                     fmt = ImageFormat.Bmp;
                     break;
-                case "png":
+                case ".png":
                     fmt = ImageFormat.Png;
                     break;
             }

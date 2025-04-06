@@ -71,15 +71,33 @@ namespace MeleeMedia.Video
 
                     // process until 0xFFD9 is found?
                     int j;
+                    int lastff = -1;
                     for (j = i; j < data.Length; j++)
                     {
                         frameConv.Add(data[j]);
+
                         if (data[j] == 0xFF)
+                        {
                             if (encode)
-                                j++;
+                            {
+                                if (j + 1 < data.Length && data[j + 1] != 0xD9)
+                                    j++;
+                            }
                             else
+                            {
+                                if (j + 1 < data.Length && 
+                                    data[j + 1] == 0xD9)
+                                {
+                                    lastff = frameConv.Count;
+                                }
+
                                 frameConv.Add(0x00);
+                            }
+                        }
                     }
+                    if (lastff != -1)
+                        frameConv.RemoveAt(lastff);
+
                     i = j;
 
                     continue;
