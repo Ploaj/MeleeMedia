@@ -92,41 +92,49 @@ namespace MeleeMediaCLI.Video
         {
             using (FileStream fstream = new FileStream(mthPath, FileMode.Create))
             using (VideoFileReader reader = new VideoFileReader())
-            using (MTHWriter mth = new MTHWriter(fstream, frameWidth, frameHeight, reader.FrameRate))
             {
                 // open video file
                 reader.Open(mp4Path);
 
-                // use original video width and height
-                if (frameHeight == -1)
-                    frameHeight = reader.Height;
-
                 if (frameWidth == -1)
                     frameWidth = reader.Width;
 
-                // calculate frame rate
-                //var rate = reader.FrameRate / (float)frameRate;
+                if (frameHeight == -1)
+                    frameHeight = reader.Height;
 
-                // copy frames
-                float curr_frame = 0;
-                while (curr_frame < reader.FrameCount)
+                using (MTHWriter mth = new MTHWriter(fstream, frameWidth, frameHeight, reader.FrameRate))
                 {
-                    //var dis = (int)((curr_frame + rate) - curr_frame) - 1;
-                    curr_frame += 1;
+                    // use original video width and height
+                    if (frameHeight == -1)
+                        frameHeight = reader.Height;
 
-                    using (Bitmap frame = reader.ReadVideoFrame())
+                    if (frameWidth == -1)
+                        frameWidth = reader.Width;
+
+                    // calculate frame rate
+                    //var rate = reader.FrameRate / (float)frameRate;
+
+                    // copy frames
+                    float curr_frame = 0;
+                    while (curr_frame < reader.FrameCount)
                     {
-                        var thp = frame.ToTHP(compression);
-                        if (frame.Width != frameWidth || frame.Height != frameHeight)
+                        //var dis = (int)((curr_frame + rate) - curr_frame) - 1;
+                        curr_frame += 1;
+
+                        using (Bitmap frame = reader.ReadVideoFrame())
                         {
-                            using (var resize = ResizeBitmap(frame, frameWidth, frameHeight))
+                            var thp = frame.ToTHP(compression);
+                            if (frame.Width != frameWidth || frame.Height != frameHeight)
+                            {
+                                using (var resize = ResizeBitmap(frame, frameWidth, frameHeight))
+                                {
+                                    mth.WriteFrame(thp);
+                                }
+                            }
+                            else
                             {
                                 mth.WriteFrame(thp);
                             }
-                        }
-                        else
-                        {
-                            mth.WriteFrame(thp);
                         }
                     }
                 }
