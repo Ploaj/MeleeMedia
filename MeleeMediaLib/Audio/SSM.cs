@@ -22,11 +22,16 @@ namespace MeleeMedia.Audio
         public DSP[] Sounds { get; set; } = new DSP[0];
 
         /// <summary>
+        /// Size of buffer, will get updated after saving
+        /// </summary>
+        public uint BufferSize { get; internal set; }
+
+        /// <summary>
         /// 
         /// </summary>
         public SSM()
         {
-
+            BufferSize = 0;
         }
 
         /// <summary>
@@ -82,7 +87,7 @@ namespace MeleeMedia.Audio
                 r.BigEndian = true;
 
                 var headerLength = r.ReadInt32() + 0x10;
-                var dataOff = r.ReadInt32();
+                BufferSize = r.ReadUInt32();
                 var soundCount = r.ReadInt32();
                 StartIndex = r.ReadInt32();
 
@@ -138,7 +143,7 @@ namespace MeleeMedia.Audio
         /// <param name="filePath"></param>
         public void Save(string filePath)
         {
-            Save(filePath, out int _);
+            Save(filePath, out int buffer);
         }
 
         /// <summary>
@@ -239,6 +244,7 @@ namespace MeleeMedia.Audio
                 w.Write((int)DataSize);
 
                 bufferSize = (int)DataSize;
+                BufferSize = (uint)DataSize;
             }
         }
     }
