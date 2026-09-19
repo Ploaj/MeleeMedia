@@ -71,7 +71,7 @@ namespace MeleeMediaCLI.Video
         /// <param name="filePath"></param>
         public static void MTHtoMP4(string mthPath, string mp4Path)
         {
-            using (FileStream fstream = new FileStream(mthPath, FileMode.Create))
+            using (FileStream fstream = new FileStream(mthPath, FileMode.Open))
             using (var mth = new MTHReader(fstream))
             using (var vFWriter = new VideoFileWriter())
             {
